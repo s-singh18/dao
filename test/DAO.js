@@ -128,7 +128,7 @@ describe("DAO", () => {
     });
   });
 
-  describe("Voting", () => {
+  describe("Upvoting", () => {
     let transaction, result;
 
     beforeEach(async () => {
@@ -140,13 +140,52 @@ describe("DAO", () => {
 
     describe("Success", () => {
       beforeEach(async () => {
-        transaction = await dao.connect(investor1).vote(1);
+        transaction = await dao.connect(investor1).upvote(1);
         result = await transaction.wait();
       });
 
-      it("Should update vote count", async () => {
+      it("Should update upvote count", async () => {
         const proposal = await dao.proposals(1);
-        expect(proposal.votes).to.equal(tokens(200000));
+        expect(proposal.upvotes).to.equal(tokens(200000));
+      });
+
+      it("Should emit vote event", async () => {
+        await expect(transaction)
+          .to.emit(dao, "Vote")
+          .withArgs(1, investor1.address);
+      });
+    });
+
+    describe("Failure", () => {
+      it("Should reject up voting", async () => {
+        expect(await dao.connect(investor1).upvote(1)).to.be.reverted;
+      });
+
+      it("Should reject non-investors", async () => {
+        await expect(dao.connect(user).upvote(1)).to.be.reverted;
+      });
+    });
+  });
+
+  describe("Downvoting", () => {
+    let transaction, result;
+
+    beforeEach(async () => {
+      transaction = await dao
+        .connect(investor1)
+        .createProposal("Proposal 1", ether(100), recipient.address);
+      result = await transaction.wait();
+    });
+
+    describe("Success", () => {
+      beforeEach(async () => {
+        transaction = await dao.connect(investor1).downvote(1);
+        result = await transaction.wait();
+      });
+
+      it("Should update downvote count", async () => {
+        const proposal = await dao.proposals(1);
+        expect(proposal.downvotes).to.equal(tokens(200000));
       });
 
       it("Should emit vote event", async () => {
@@ -158,11 +197,11 @@ describe("DAO", () => {
 
     describe("Failure", () => {
       it("Should reject double voting", async () => {
-        expect(await dao.connect(investor1).vote(1)).to.be.reverted;
+        expect(await dao.connect(investor1).downvote(1)).to.be.reverted;
       });
 
       it("Should reject non-investors", async () => {
-        await expect(dao.connect(user).vote(1)).to.be.reverted;
+        await expect(dao.connect(user).downvote(1)).to.be.reverted;
       });
     });
   });
@@ -177,13 +216,13 @@ describe("DAO", () => {
           .createProposal("Proposal 1", ether(100), recipient.address);
         result = await transaction.wait();
 
-        transaction = await dao.connect(investor1).vote(1);
+        transaction = await dao.connect(investor1).upvote(1);
         result = await transaction.wait();
 
-        transaction = await dao.connect(investor2).vote(1);
+        transaction = await dao.connect(investor2).upvote(1);
         result = await transaction.wait();
 
-        transaction = await dao.connect(investor3).vote(1);
+        transaction = await dao.connect(investor3).upvote(1);
         result = await transaction.wait();
 
         transaction = await dao.connect(investor1).finalizeProposal(1);
@@ -213,15 +252,15 @@ describe("DAO", () => {
           .createProposal("Proposal 1", ether(100), recipient.address);
         result = await transaction.wait();
 
-        transaction = await dao.connect(investor1).vote(1);
+        transaction = await dao.connect(investor1).upvote(1);
         result = await transaction.wait();
 
-        transaction = await dao.connect(investor2).vote(1);
+        transaction = await dao.connect(investor2).upvote(1);
         result = await transaction.wait();
       });
 
       it("Should reject finalization from non-investor", async () => {
-        transaction = await dao.connect(investor3).vote(1);
+        transaction = await dao.connect(investor3).upvote(1);
         result = await transaction.wait();
 
         await expect(dao.connect(user).finalizeProposal(1)).to.be.reverted;
@@ -232,7 +271,7 @@ describe("DAO", () => {
       });
 
       it("Should reject proposal if already finalized", async () => {
-        transaction = await dao.connect(investor3).vote(1);
+        transaction = await dao.connect(investor3).upvote(1);
         result = await transaction.wait();
 
         transaction = await dao.connect(investor1).finalizeProposal(1);

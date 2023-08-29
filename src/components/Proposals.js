@@ -1,11 +1,29 @@
 import { Button, Table } from "react-bootstrap";
 import { ethers } from "ethers";
 
-const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
-  const voteHandler = async (id) => {
+const Proposals = ({
+  account,
+  provider,
+  dao,
+  proposals,
+  quorum,
+  setIsLoading,
+}) => {
+  const upvoteHandler = async (id) => {
     try {
       const signer = await provider.getSigner();
-      const transaction = await dao.connect(signer).vote(id);
+      const transaction = await dao.connect(signer).upvote(id);
+      await transaction.wait();
+    } catch {
+      window.alert("User rejected or transaction reverted");
+    }
+    setIsLoading(true);
+  };
+
+  const downvoteHandler = async (id) => {
+    try {
+      const signer = await provider.getSigner();
+      const transaction = await dao.connect(signer).downvote(id);
       await transaction.wait();
     } catch {
       window.alert("User rejected or transaction reverted");
@@ -24,8 +42,9 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
     setIsLoading(true);
   };
 
-  console.log(proposals);
-
+  // console.log(`Proposals: ${proposals}`);
+  // console.log(`Upvotes: ${upvotes}`);
+  // console.log(`Downvotes: ${downvotes}`);
   return (
     <Table striped bordered hover responsive>
       <thead>
@@ -35,7 +54,8 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
           <th>Recipient Address</th>
           <th>Amount</th>
           <th>Status</th>
-          <th>Total Votes</th>
+          <th>Upvotes</th>
+          <th>Downvotes</th>
           <th>Cast Vote</th>
           <th>Finalize</th>
         </tr>
@@ -48,20 +68,30 @@ const Proposals = ({ provider, dao, proposals, quorum, setIsLoading }) => {
             <td>{proposal.recipient}</td>
             <td>{ethers.utils.formatUnits(proposal.amount, "ether")} ETH</td>
             <td>{proposal.finalized ? "Approved" : "In Progress"}</td>
-            <td>{proposal.votes.toString()}</td>
+            <td>{proposal.upvotes.toString()}</td>
+            <td>{proposal.downvotes.toString()}</td>
             <td>
               {!proposal.finalized && (
                 <Button
                   variant="primary"
                   style={{ width: "100%" }}
-                  onClick={() => voteHandler(proposal.id)}
+                  onClick={() => upvoteHandler(proposal.id)}
                 >
-                  Vote
+                  Upvote
+                </Button>
+              )}
+              {!proposal.finalized && (
+                <Button
+                  variant="primary"
+                  style={{ width: "100%" }}
+                  onClick={() => downvoteHandler(proposal.id)}
+                >
+                  Downvote
                 </Button>
               )}
             </td>
             <td>
-              {!proposal.finalized && proposal.votes > quorum && (
+              {!proposal.finalized && proposal.upvotes > quorum && (
                 <Button
                   variant="primary"
                   style={{ width: "100%" }}

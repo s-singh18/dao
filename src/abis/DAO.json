@@ -109,6 +109,43 @@
         "type": "uint256"
       }
     ],
+    "name": "downvote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "downvotes",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_id",
+        "type": "uint256"
+      }
+    ],
     "name": "finalizeProposal",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -159,7 +196,12 @@
       },
       {
         "internalType": "uint256",
-        "name": "votes",
+        "name": "upvotes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "downvotes",
         "type": "uint256"
       },
       {
@@ -205,9 +247,33 @@
         "type": "uint256"
       }
     ],
-    "name": "vote",
+    "name": "upvote",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "upvotes",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {

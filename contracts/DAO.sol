@@ -14,13 +14,15 @@ contract DAO {
         string name;
         uint256 amount;
         address payable recipient;
-        uint256 votes;
+        uint256 upvotes;
+        uint256 downvotes;
         bool finalized;
     }
 
     uint256 public proposalCount;
     mapping(uint256 => Proposal) public proposals;
-    mapping(address => mapping(uint256 => bool)) votes;
+    mapping(address => mapping(uint256 => bool)) public upvotes;
+    mapping(address => mapping(uint256 => bool)) public downvotes;
 
     event Propose(uint id, uint256 amount, address recipient, address creator);
 
@@ -55,17 +57,28 @@ contract DAO {
             _amount,
             _recipient,
             0,
+            0,
             false
         );
 
         emit Propose(proposalCount, _amount, _recipient, msg.sender);
     }
 
-    function vote(uint256 _id) external onlyInvestor {
+    function upvote(uint256 _id) external onlyInvestor {
         Proposal storage proposal = proposals[_id];
-        require(votes[msg.sender][_id] != true, "Avoid voting twice");
-        proposal.votes += token.balanceOf(msg.sender);
-        votes[msg.sender][_id] = true;
+        require(upvotes[msg.sender][_id] != true, "Avoid voting twice");
+        require(downvotes[msg.sender][_id] != true, "Avoid voting twice");
+        proposal.upvotes += token.balanceOf(msg.sender);
+        upvotes[msg.sender][_id] = true;
+        emit Vote(_id, msg.sender);
+    }
+
+    function downvote(uint256 _id) external onlyInvestor {
+        Proposal storage proposal = proposals[_id];
+        require(upvotes[msg.sender][_id] != true, "Avoid voting twice");
+        require(downvotes[msg.sender][_id] != true, "Avoid voting twice");
+        proposal.downvotes += token.balanceOf(msg.sender);
+        downvotes[msg.sender][_id] = true;
         emit Vote(_id, msg.sender);
     }
 
@@ -76,9 +89,9 @@ contract DAO {
         require(proposal.finalized == false, "proposal already finalized");
         // Mark as finalized
         proposal.finalized = true;
-        // Check that proposal has enough votes
+        // Check that proposal has enough upvotes
         require(
-            proposal.votes >= quorum,
+            proposal.upvotes >= quorum,
             "must reach quorum to finalize proposal"
         );
         // Transfer the funds
