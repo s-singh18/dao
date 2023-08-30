@@ -17,6 +17,7 @@ contract DAO {
         uint256 upvotes;
         uint256 downvotes;
         bool finalized;
+        string description;
     }
 
     uint256 public proposalCount;
@@ -45,7 +46,8 @@ contract DAO {
     function createProposal(
         string memory _name,
         uint256 _amount,
-        address payable _recipient
+        address payable _recipient,
+        string memory _description
     ) external onlyInvestor {
         require(address(this).balance >= _amount);
         require(token.balanceOf(msg.sender) > 0, "must be token holder");
@@ -58,7 +60,8 @@ contract DAO {
             _recipient,
             0,
             0,
-            false
+            false,
+            _description
         );
 
         emit Propose(proposalCount, _amount, _recipient, msg.sender);

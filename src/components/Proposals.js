@@ -7,6 +7,8 @@ const Proposals = ({
   dao,
   proposals,
   quorum,
+  balance,
+  displayVotes,
   setIsLoading,
 }) => {
   const upvoteHandler = async (id) => {
@@ -42,9 +44,6 @@ const Proposals = ({
     setIsLoading(true);
   };
 
-  // console.log(`Proposals: ${proposals}`);
-  // console.log(`Upvotes: ${upvotes}`);
-  // console.log(`Downvotes: ${downvotes}`);
   return (
     <Table striped bordered hover responsive>
       <thead>
@@ -70,8 +69,9 @@ const Proposals = ({
             <td>{proposal.finalized ? "Approved" : "In Progress"}</td>
             <td>{proposal.upvotes.toString()}</td>
             <td>{proposal.downvotes.toString()}</td>
+
             <td>
-              {!proposal.finalized && (
+              {!proposal.finalized && balance !== "0" && displayVotes[index] && (
                 <Button
                   variant="primary"
                   style={{ width: "100%" }}
@@ -80,7 +80,7 @@ const Proposals = ({
                   Upvote
                 </Button>
               )}
-              {!proposal.finalized && (
+              {!proposal.finalized && balance !== "0" && displayVotes[index] && (
                 <Button
                   variant="primary"
                   style={{ width: "100%" }}
@@ -91,15 +91,17 @@ const Proposals = ({
               )}
             </td>
             <td>
-              {!proposal.finalized && proposal.upvotes > quorum && (
-                <Button
-                  variant="primary"
-                  style={{ width: "100%" }}
-                  onClick={() => finalizeHandler(proposal.id)}
-                >
-                  Finalize
-                </Button>
-              )}
+              {!proposal.finalized &&
+                balance !== "0" &&
+                proposal.upvotes > quorum && (
+                  <Button
+                    variant="primary"
+                    style={{ width: "100%" }}
+                    onClick={() => finalizeHandler(proposal.id)}
+                  >
+                    Finalize
+                  </Button>
+                )}
             </td>
           </tr>
         ))}

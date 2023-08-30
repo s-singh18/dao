@@ -100,6 +100,7 @@ describe("DAO", () => {
         expect(proposal.id).to.equal(1);
         expect(proposal.amount).to.equal(ether(100));
         expect(proposal.recipient).to.equal(recipient.address);
+        expect(proposal.description).to.equal("");
       });
 
       it("Should emit a propose event", async () => {

@@ -10,6 +10,7 @@ import Loading from "./Loading";
 
 // ABIs: Import your contract ABIs here
 import DAO_ABI from "../abis/DAO.json";
+import TOKEN_ABI from "../abis/Token.json";
 
 // Config: Import your network config here
 import config from "../config.json";
@@ -17,6 +18,7 @@ import config from "../config.json";
 function App() {
   const [provider, setProvider] = useState(null);
   const [dao, setDao] = useState(null);
+  const [token, setToken] = useState(null);
   const [treasuryBalance, setTreasuryBalance] = useState(0);
 
   const [account, setAccount] = useState(null);
@@ -24,6 +26,8 @@ function App() {
   const [proposals, setProposals] = useState(null);
 
   const [quorum, setQuorum] = useState(null);
+  const [displayVotes, setDisplayVotes] = useState(null);
+  const [tokenBalance, setTokenBalance] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,6 +44,13 @@ function App() {
     );
     setDao(dao);
 
+    const token = new ethers.Contract(
+      config[31337].token.address,
+      TOKEN_ABI,
+      provider
+    );
+    setToken(token);
+
     // Fetch treasury balance
     let treasuryBalance = await provider.getBalance(dao.address);
     treasuryBalance = ethers.utils.formatUnits(treasuryBalance, 18);
@@ -51,21 +62,32 @@ function App() {
     });
     const account = ethers.utils.getAddress(accounts[0]);
     setAccount(account);
+    console.log(provider);
 
     // Fetch proposals count
     const count = await dao.proposalCount();
     const items = [];
+    const displayVotes = [];
 
     for (var i = 0; i < count; i++) {
       const proposal = await dao.proposals(i + 1);
       items.push(proposal);
+      const upvote = await dao.upvotes(account, proposal.id);
+      const downvote = await dao.downvotes(account, proposal.id);
+
+      !upvote && !downvote ? displayVotes.push(true) : displayVotes.push(false);
     }
 
     setProposals(items);
     console.log(items);
 
+    setDisplayVotes(displayVotes);
+
     // Fetch quorum
     setQuorum(await dao.quorum());
+
+    const tokenBalance = (await token.balanceOf(account)).toString();
+    setTokenBalance(tokenBalance);
 
     setIsLoading(false);
   };
@@ -102,6 +124,8 @@ function App() {
             dao={dao}
             proposals={proposals}
             quorum={quorum}
+            balance={tokenBalance}
+            displayVotes={displayVotes}
             setIsLoading={setIsLoading}
           />
         </>
