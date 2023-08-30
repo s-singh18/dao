@@ -28,6 +28,7 @@ function App() {
   const [quorum, setQuorum] = useState(null);
   const [displayVotes, setDisplayVotes] = useState(null);
   const [tokenBalance, setTokenBalance] = useState(null);
+  const [recipientBalances, setRecipientBalances] = useState(null);
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -62,12 +63,12 @@ function App() {
     });
     const account = ethers.utils.getAddress(accounts[0]);
     setAccount(account);
-    console.log(provider);
 
     // Fetch proposals count
     const count = await dao.proposalCount();
     const items = [];
     const displayVotes = [];
+    const recipientBalances = [];
 
     for (var i = 0; i < count; i++) {
       const proposal = await dao.proposals(i + 1);
@@ -75,16 +76,23 @@ function App() {
       const upvote = await dao.upvotes(account, proposal.id);
       const downvote = await dao.downvotes(account, proposal.id);
 
+      const recipientBalance = (
+        await token.balanceOf(proposal.recipient)
+      ).toString();
+      recipientBalances.push(recipientBalance);
+
       !upvote && !downvote ? displayVotes.push(true) : displayVotes.push(false);
     }
 
+    setRecipientBalances(recipientBalances);
+
     setProposals(items);
-    console.log(items);
 
     setDisplayVotes(displayVotes);
 
     // Fetch quorum
-    setQuorum(await dao.quorum());
+    const quorum = await dao.quorum();
+    setQuorum(quorum.toString());
 
     const tokenBalance = (await token.balanceOf(account)).toString();
     setTokenBalance(tokenBalance);
@@ -103,7 +111,7 @@ function App() {
       <Navigation account={account} />
 
       <h1 className="my-4 text-center">Welcome to our DAO!</h1>
-
+      <h4 className="my-4 text-center">Quorum: {quorum}</h4>
       {isLoading ? (
         <Loading />
       ) : (
@@ -125,6 +133,7 @@ function App() {
             proposals={proposals}
             quorum={quorum}
             balance={tokenBalance}
+            recipientBalances={recipientBalances}
             displayVotes={displayVotes}
             setIsLoading={setIsLoading}
           />

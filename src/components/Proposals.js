@@ -8,6 +8,7 @@ const Proposals = ({
   proposals,
   quorum,
   balance,
+  recipientBalances,
   displayVotes,
   setIsLoading,
 }) => {
@@ -51,6 +52,8 @@ const Proposals = ({
           <th>#</th>
           <th>Proposal</th>
           <th>Recipient Address</th>
+          <th>Recipient Balance</th>
+          <th>Description</th>
           <th>Amount</th>
           <th>Status</th>
           <th>Upvotes</th>
@@ -65,6 +68,8 @@ const Proposals = ({
             <td>{proposal.id.toString()}</td>
             <td>{proposal.name}</td>
             <td>{proposal.recipient}</td>
+            <td>{recipientBalances[index]}</td>
+            <td>{proposal.description}</td>
             <td>{ethers.utils.formatUnits(proposal.amount, "ether")} ETH</td>
             <td>{proposal.finalized ? "Approved" : "In Progress"}</td>
             <td>{proposal.upvotes.toString()}</td>
