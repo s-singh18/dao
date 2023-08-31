@@ -36,6 +36,12 @@ async function main() {
   );
   console.log(`Token fetched: ${token.address}`);
 
+  const customToken = await ethers.getContractAt(
+    "CustomToken",
+    config[chainId].customToken.address
+  );
+  console.log(`CustomToken fetched: ${customToken.address}`);
+
   transaction = await token.transfer(investor1.address, tokens(200000));
   await transaction.wait();
 
@@ -50,10 +56,7 @@ async function main() {
   const dao = await ethers.getContractAt("DAO", config[chainId].dao.address);
   console.log(`DAO fetched: ${dao.address}\n`);
 
-  transaction = await funder.sendTransaction({
-    to: dao.address,
-    value: ether(1000),
-  });
+  transaction = await customToken.transfer(dao.address, tokens(1000000));
   await transaction.wait();
   console.log(`Sent funds to dao treasury`);
 

@@ -14,13 +14,18 @@ async function main() {
   // Deploy Token
   const Token = await hre.ethers.getContractFactory("Token");
   let token = await Token.deploy(NAME, SYMBOL, MAX_SUPPLY);
-
   await token.deployed();
   console.log(`Token deployed to: ${token.address}\n`);
+
   const DAO = await hre.ethers.getContractFactory("DAO");
   const dao = await DAO.deploy(token.address, "500000000000000000000001");
   await dao.deployed();
   console.log(`DAO deployed to: ${dao.address}\n`);
+
+  const CustomToken = await hre.ethers.getContractFactory("CustomToken");
+  let customToken = await CustomToken.deploy();
+  await customToken.deployed();
+  console.log(`CustomToken deployed to: ${customToken.address}`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
