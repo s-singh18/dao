@@ -8,6 +8,7 @@ import "./CustomToken.sol";
 contract DAO {
     address owner;
     Token public token;
+    CustomToken public customToken;
     uint256 public quorum;
 
     struct Proposal {
@@ -31,9 +32,10 @@ contract DAO {
     event Vote(uint256 id, address investor);
     event Finalize(uint256 id);
 
-    constructor(Token _token, uint256 _quorum) {
+    constructor(Token _token, CustomToken _customToken, uint256 _quorum) {
         owner = msg.sender;
         token = _token;
+        customToken = _customToken;
         quorum = _quorum;
     }
 
@@ -50,8 +52,12 @@ contract DAO {
         address payable _recipient,
         string memory _description
     ) external onlyInvestor {
-        require(address(this).balance >= _amount);
-        require(token.balanceOf(msg.sender) > 0, "must be token holder");
+        // require(address(this).balance >= _amount);
+        require(
+            customToken.balanceOf(address(this)) >= _amount,
+            "Not enough tokens in treasury"
+        );
+        require(token.balanceOf(msg.sender) > 0, "Must be token holder");
         proposalCount++;
 
         proposals[proposalCount] = Proposal(
@@ -99,10 +105,15 @@ contract DAO {
             "must reach quorum to finalize proposal"
         );
         // Transfer the funds
-        require(address(this).balance >= proposal.amount);
+        // require(address(this).balance >= proposal.amount);
+        // (bool sent, ) = proposal.recipient.call{value: proposal.amount}("");
+        // require(sent);
+        require(
+            customToken.balanceOf(address(this)) >= proposal.amount,
+            "Not enough tokens in treasury"
+        );
+        customToken.transfer(proposal.recipient, proposal.amount);
 
-        (bool sent, ) = proposal.recipient.call{value: proposal.amount}("");
-        require(sent);
         // Emit the event
         emit Finalize(_id);
     }

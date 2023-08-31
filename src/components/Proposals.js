@@ -70,7 +70,7 @@ const Proposals = ({
             <td>{proposal.recipient}</td>
             <td>{recipientBalances[index]}</td>
             <td>{proposal.description}</td>
-            <td>{ethers.utils.formatUnits(proposal.amount, "ether")} ETH</td>
+            <td>{ethers.utils.formatUnits(proposal.amount, "ether")} CTK</td>
             <td>{proposal.finalized ? "Approved" : "In Progress"}</td>
             <td>{proposal.upvotes.toString()}</td>
             <td>{proposal.downvotes.toString()}</td>

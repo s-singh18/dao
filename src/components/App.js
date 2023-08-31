@@ -52,8 +52,15 @@ function App() {
     );
     setToken(token);
 
+    const customToken = new ethers.Contract(
+      config[31337].customToken.address,
+      TOKEN_ABI,
+      provider
+    );
+    setToken(token);
+
     // Fetch treasury balance
-    let treasuryBalance = await provider.getBalance(dao.address);
+    let treasuryBalance = await customToken.balanceOf(dao.address);
     treasuryBalance = ethers.utils.formatUnits(treasuryBalance, 18);
     setTreasuryBalance(treasuryBalance);
 
@@ -76,10 +83,11 @@ function App() {
       const upvote = await dao.upvotes(account, proposal.id);
       const downvote = await dao.downvotes(account, proposal.id);
 
-      const recipientBalance = (
-        await token.balanceOf(proposal.recipient)
-      ).toString();
-      recipientBalances.push(recipientBalance);
+      const recipientBalance = ethers.utils.formatUnits(
+        (await customToken.balanceOf(proposal.recipient)).toString(),
+        18
+      );
+      recipientBalances.push(recipientBalance + " CTK");
 
       !upvote && !downvote ? displayVotes.push(true) : displayVotes.push(false);
     }
@@ -121,7 +129,7 @@ function App() {
           <hr />
 
           <p className="text-center">
-            <strong>Treasury Balance:</strong> {treasuryBalance} ETH
+            <strong>Treasury Balance:</strong> {treasuryBalance} CTK
           </p>
 
           <hr />

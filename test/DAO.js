@@ -8,7 +8,7 @@ const tokens = (n) => {
 const ether = tokens;
 
 describe("DAO", () => {
-  let token, dao;
+  let token, dao, customToken;
   let deployer,
     funder,
     investor1,
@@ -33,6 +33,9 @@ describe("DAO", () => {
     ] = await ethers.getSigners();
     const Token = await ethers.getContractFactory("Token");
     token = await Token.deploy("Dapp University", "DAPP", "1000000");
+
+    const CustomToken = await ethers.getContractFactory("CustomToken");
+    customToken = await CustomToken.deploy();
 
     transaction = await token
       .connect(deployer)
@@ -60,19 +63,31 @@ describe("DAO", () => {
     await transaction.wait();
 
     const DAO = await ethers.getContractFactory("DAO");
-    dao = await DAO.deploy(token.address, "500000000000000000000001");
+    dao = await DAO.deploy(
+      token.address,
+      customToken.address,
+      "500000000000000000000001"
+    );
 
-    await funder.sendTransaction({ to: dao.address, value: ether(100) });
+    transaction = await customToken
+      .connect(deployer)
+      .transfer(dao.address, tokens(1000000));
+    await transaction.wait();
   });
 
   describe("Deployment", () => {
-    it("Should send ether to the DAO treasury", async () => {
-      expect(await ethers.provider.getBalance(dao.address)).to.equal(
-        ether(100)
+    it("Should send customToken to the DAO treasury", async () => {
+      expect(await customToken.balanceOf(dao.address)).to.equal(
+        tokens(1000000)
       );
     });
+
     it("Should have correct token address", async () => {
       expect(await dao.token()).to.equal(token.address);
+    });
+
+    it("Should have correct custom token address", async () => {
+      expect(await dao.customToken()).to.equal(customToken.address);
     });
 
     it("Should return quorum", async () => {
@@ -87,7 +102,7 @@ describe("DAO", () => {
       beforeEach(async () => {
         transaction = await dao
           .connect(investor1)
-          .createProposal("Proposal 1", ether(100), recipient.address);
+          .createProposal("Proposal 1", tokens(100), recipient.address, "");
         result = await transaction.wait();
       });
 
@@ -98,7 +113,7 @@ describe("DAO", () => {
       it("Should update proposal mapping", async () => {
         const proposal = await dao.proposals(1);
         expect(proposal.id).to.equal(1);
-        expect(proposal.amount).to.equal(ether(100));
+        expect(proposal.amount).to.equal(tokens(100));
         expect(proposal.recipient).to.equal(recipient.address);
         expect(proposal.description).to.equal("");
       });
@@ -106,7 +121,7 @@ describe("DAO", () => {
       it("Should emit a propose event", async () => {
         await expect(transaction)
           .to.emit(dao, "Propose")
-          .withArgs(1, ether(100), recipient.address, investor1.address);
+          .withArgs(1, tokens(100), recipient.address, investor1.address);
       });
     });
 
@@ -115,7 +130,12 @@ describe("DAO", () => {
         await expect(
           dao
             .connect(investor1)
-            .createProposal("Proposal 1", ether(1000), recipient.address)
+            .createProposal(
+              "Proposal 1",
+              tokens(10000000),
+              recipient.address,
+              ""
+            )
         ).to.be.reverted;
       });
 
@@ -123,7 +143,7 @@ describe("DAO", () => {
         await expect(
           dao
             .connect(user)
-            .createProposal("Proposal 2", ether(1000), recipient.address)
+            .createProposal("Proposal 2", tokens(1000), recipient.address, "")
         ).to.be.reverted;
       });
     });
@@ -135,7 +155,7 @@ describe("DAO", () => {
     beforeEach(async () => {
       transaction = await dao
         .connect(investor1)
-        .createProposal("Proposal 1", ether(100), recipient.address);
+        .createProposal("Proposal 1", tokens(100), recipient.address, "");
       result = await transaction.wait();
     });
 
@@ -174,7 +194,7 @@ describe("DAO", () => {
     beforeEach(async () => {
       transaction = await dao
         .connect(investor1)
-        .createProposal("Proposal 1", ether(100), recipient.address);
+        .createProposal("Proposal 1", tokens(100), recipient.address, "");
       result = await transaction.wait();
     });
 
@@ -214,7 +234,7 @@ describe("DAO", () => {
       beforeEach(async () => {
         transaction = await dao
           .connect(investor1)
-          .createProposal("Proposal 1", ether(100), recipient.address);
+          .createProposal("Proposal 1", tokens(102), recipient.address, "");
         result = await transaction.wait();
 
         transaction = await dao.connect(investor1).upvote(1);
@@ -236,8 +256,8 @@ describe("DAO", () => {
       });
 
       it("Should transfer funds to recipient", async () => {
-        expect(await ethers.provider.getBalance(recipient.address)).to.equal(
-          tokens(10200)
+        expect(await customToken.balanceOf(recipient.address)).to.equal(
+          tokens(102)
         );
       });
 
@@ -250,7 +270,7 @@ describe("DAO", () => {
       beforeEach(async () => {
         transaction = await dao
           .connect(investor1)
-          .createProposal("Proposal 1", ether(100), recipient.address);
+          .createProposal("Proposal 1", tokens(1000000), recipient.address, "");
         result = await transaction.wait();
 
         transaction = await dao.connect(investor1).upvote(1);
@@ -279,6 +299,20 @@ describe("DAO", () => {
         result = await transaction.wait();
 
         await expect(dao.connect(investor1).finalizeProposal(1)).to.be.reverted;
+      });
+
+      it("Should reject proposal if drained of funds", async () => {
+        transaction = await dao.connect(investor3).upvote(1);
+        result = await transaction.wait();
+
+        transaction = await dao.connect(investor1).finalizeProposal(1);
+        result = await transaction.wait();
+
+        await expect(
+          dao
+            .connect(investor1)
+            .createProposal("Proposal 1", tokens(1), recipient.address, "")
+        ).to.be.reverted;
       });
     });
   });
